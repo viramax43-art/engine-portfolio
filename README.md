@@ -33,6 +33,7 @@ screw_conveyor/    программа 1: core, catalog, charts, report, cli, web
 hydro_net/         программа 2: core, catalog, charts, report, cli, web, tests
 docs/screenshots/  снимки интерфейсов для портфолио
 deploy/hf_space.py публикация Docker Space на Hugging Face
+deploy/pythonanywhere.py деплой на PythonAnywhere через Web API
 out/               готовые отчёты (PDF/DOCX), создаются при запуске
 Procfile           команда запуска для хостингов (Render, Railway и совместимые)
 render.yaml        blueprint бесплатного веб-сервиса Render
@@ -101,16 +102,29 @@ python app.py                  # http://127.0.0.1:8000 → / , /screw/ , /hydro/
 Переменные окружения заданы в `render.yaml`: `PYTHON_VERSION=3.12.6`,
 `MPLCONFIGDIR=/tmp/mpl`, `OUT_DIR=/tmp/out`, `SCREW_PREFIX=/screw`, `HYDRO_PREFIX=/hydro`.
 
-### Hugging Face Spaces (Docker, без карты)
+### PythonAnywhere (бесплатный тариф, без карты)
+
+```powershell
+python deploy/pythonanywhere.py --username <login> --token <api-token>
+```
+
+Скрипт по Web API загружает код в `/home/<login>/engine-portfolio`, создаёт веб-приложение
+`https://<login>.pythonanywhere.com`, прописывает WSGI-файл, ставит зависимости в bash-консоли
+(`pip install --user -r requirements.txt`) и перезагружает приложение. Повторный запуск
+обновляет код. Токен берётся на странице Account → API token.
+
+### Hugging Face Spaces (Docker)
 
 ```powershell
 $env:HF_TOKEN = "hf_..."        # токен с правами write (Settings → Access Tokens)
-python deploy/hf_space.py       # создаёт Space, собирает образ и печатает адрес *.hf.space
+python deploy/hf_space.py       # создаёт Space, печатает адрес *.hf.space
 ```
 
 Скрипт `deploy/hf_space.py` создаёт публичный Docker-Space, загружает код и `Dockerfile`
-и печатает ссылки на карточку Space и на само приложение (`https://<user>-engine-portfolio.hf.space`).
+и печатает ссылки на карточку Space и на приложение (`https://<user>-engine-portfolio.hf.space`).
 Приложение слушает порт 7860 (`app_port` в карточке Space), отчёты пишутся в `/tmp/out`.
+Docker-Space на бесплатном `cpu-basic` Hugging Face требует PRO-подписки — скрипт нужен,
+если подписка есть.
 Тот же репозиторий разворачивается через `Dockerfile` (порт из `PORT`, по умолчанию 7860)
 на Koyeb, Hugging Face Spaces и любом Docker-хостинге.
 
