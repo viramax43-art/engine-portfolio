@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Результаты расчётов (пересобираются командами из README)
+out/
+
+# Служебные файлы
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
