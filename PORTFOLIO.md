@@ -1,12 +1,12 @@
 # Портфолио: инженерные калькуляторы (Python + Flask)
 
 Формат карточки портфолио: **ссылка — скриншот — описание**.
-Онлайн-демо: <https://engine-portfolio.onrender.com/> · исходный код:
+Онлайн-демо: <https://zakcheks.pythonanywhere.com/> · исходный код:
 <https://github.com/viramax43-art/engine-portfolio>
 
 ## 1. Онлайн-портфолио проекта
 
-- **Ссылка:** <https://engine-portfolio.onrender.com/>
+- **Ссылка:** <https://zakcheks.pythonanywhere.com/>
 - **Скриншот:** [`docs/screenshots/portfolio.png`](docs/screenshots/portfolio.png)
 - **Описание:** единая точка входа к двум расчётным программам. Один веб-сервис на
   Flask отдаёт страницу-портфолио и оба калькулятора (`/screw/`, `/hydro/`), отчёты
@@ -14,7 +14,7 @@
 
 ## 2. Шнековый конвейер
 
-- **Ссылка:** <https://engine-portfolio.onrender.com/screw/>
+- **Ссылка:** <https://zakcheks.pythonanywhere.com/screw/>
 - **Скриншот:** [`docs/screenshots/screw.png`](docs/screenshots/screw.png)
 - **Описание:** расчёт и подбор шнекового конвейера. По грузу, производительности,
   длине и углу наклона программа считает геометрию и режим работы, подбирает диаметр
@@ -25,7 +25,7 @@
 
 ## 3. Гидравлическая сеть и подбор насоса
 
-- **Ссылка:** <https://engine-portfolio.onrender.com/hydro/>
+- **Ссылка:** <https://zakcheks.pythonanywhere.com/hydro/>
 - **Скриншот:** [`docs/screenshots/hydro.png`](docs/screenshots/hydro.png)
 - **Описание:** гидравлический расчёт сети и подбор насоса. Считает свойства
   теплоносителя (вода, водный раствор этиленгликоля, −20…150 °C), потери по длине
@@ -43,5 +43,5 @@
 | Расчёты | собственные расчётные ядра, справочники ГОСТ 8732, каталоги насосов и мотор-редукторов |
 | Графика и отчёты | matplotlib (Agg), reportlab (PDF), python-docx (Word) |
 | Качество | pytest — 76 тестов (ядро, подбор, проверки, графики, отчёты, веб-маршруты) |
-| Хостинг | Render free (blueprint `render.yaml`), альтернатива — `Dockerfile` |
+| Хостинг | PythonAnywhere free (WSGI + WSGI-бутстрап зависимостей), альтернативы — Render free (`render.yaml`) и `Dockerfile` |
 | UI | адаптивная вёрстка без шаблонизатора: общие CSS-компоненты в `common/web_kit.py` |

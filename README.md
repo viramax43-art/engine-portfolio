@@ -8,6 +8,9 @@
 | `screw_conveyor` | Расчёт и подбор шнекового конвейера (вал, привод, конструкция) | `python -m screw_conveyor.cli` | `python -m screw_conveyor.web` → http://127.0.0.1:5001 |
 | `hydro_net` | Гидравлический расчёт сети и подбор насоса по каталогу | `python -m hydro_net.cli` | `python -m hydro_net.web` → http://127.0.0.1:5002 |
 
+**Онлайн-демо:** <https://zakcheks.pythonanywhere.com/> — портфолио и оба калькулятора
+(`/screw/`, `/hydro/`), отчёты PDF/Word скачиваются с сервера.
+
 Порты переопределяются переменными окружения `SCREW_PORT` и `HYDRO_PORT`.
 
 ## Скриншоты
@@ -34,6 +37,8 @@ hydro_net/         программа 2: core, catalog, charts, report, cli, web
 docs/screenshots/  снимки интерфейсов для портфолио
 deploy/hf_space.py публикация Docker Space на Hugging Face
 deploy/pythonanywhere.py деплой на PythonAnywhere через Web API
+deploy/smoke.py    дымовой тест опубликованного сайта (страницы, расчёт, отчёты)
+deploy/screenshots.py снимки живого сайта для портфолио (Playwright)
 out/               готовые отчёты (PDF/DOCX), создаются при запуске
 Procfile           команда запуска для хостингов (Render, Railway и совместимые)
 render.yaml        blueprint бесплатного веб-сервиса Render
@@ -102,16 +107,43 @@ python app.py                  # http://127.0.0.1:8000 → / , /screw/ , /hydro/
 Переменные окружения заданы в `render.yaml`: `PYTHON_VERSION=3.12.6`,
 `MPLCONFIGDIR=/tmp/mpl`, `OUT_DIR=/tmp/out`, `SCREW_PREFIX=/screw`, `HYDRO_PREFIX=/hydro`.
 
-### PythonAnywhere (бесплатный тариф, без карты)
+### PythonAnywhere (бесплатный тариф, без карты — рабочий вариант)
+
+Бесплатный тариф PythonAnywhere не даёт запускать bash-консоль по API, поэтому
+зависимости ставит сам WSGI при первом импорте приложения (однократно, с маркером
+в `/tmp`, лог — `/tmp/engine-portfolio-deps.log`).
 
 ```powershell
-python deploy/pythonanywhere.py --username <login> --token <api-token>
+python deploy/pythonanywhere.py --username <login> --token <api-token> `
+    --venv /home/<login>/mysite/venv
 ```
 
-Скрипт по Web API загружает код в `/home/<login>/engine-portfolio`, создаёт веб-приложение
-`https://<login>.pythonanywhere.com`, прописывает WSGI-файл, ставит зависимости в bash-консоли
-(`pip install --user -r requirements.txt`) и перезагружает приложение. Повторный запуск
-обновляет код. Токен берётся на странице Account → API token.
+Скрипт по Web API (`/api/v0/user/<login>/…`):
+
+1. создаёт/обновляет веб-приложение `https://<login>.pythonanywhere.com`
+   (каталог `/home/<login>/engine-portfolio`, Python 3.13, виртуальное окружение из `--venv`);
+2. загружает файлы проекта по списку из git;
+3. пишет WSGI-файл, который сначала доустанавливает `requirements.txt`
+   в текущее окружение, а затем подключает `app.py`;
+4. перезагружает приложение и греет `/healthz` (при 500 — повторный reload,
+   до 3 попыток), при неудаче печатает хвост `/var/log/<домен>.error.log`
+   и лога установки зависимостей.
+
+Повторный запуск обновляет код. Токен берётся на странице Account → API token.
+Ограничения бесплатного тарифа: 512 МБ диска (кэш pip и старые окружения стоит
+чистить), ~40 запросов/мин к API — скрипт сам обрабатывает `429` с `Retry-After`.
+
+Проверка публикации и свежие скриншоты для портфолио:
+
+```powershell
+python deploy/smoke.py --url https://<login>.pythonanywhere.com
+python deploy/screenshots.py --url https://<login>.pythonanywhere.com
+```
+
+`smoke.py` открывает `/`, `/screw/`, `/hydro/`, `/healthz`, отправляет формы с
+примером по умолчанию и скачивает отчёты PDF и Word; `screenshots.py` (нужен
+`playwright` + `python -m playwright install chromium`) обновляет файлы в
+`docs/screenshots/`.
 
 ### Hugging Face Spaces (Docker)
 
