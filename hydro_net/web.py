@@ -25,7 +25,9 @@ from hydro_net.core import (EXAMPLES, CalculationError, NetworkInput, Section,
                             calculate, evaluate, select)
 from hydro_net.report import PROGRAM, TITLE, build_docx, build_pdf
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "out")
+OUT_DIR = wk.report_dir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                     "out"))
+PREFIX = os.environ.get("HYDRO_PREFIX", "").rstrip("/")
 CACHE: OrderedDict[str, tuple[NetworkInput, str]] = OrderedDict()
 CACHE_LIMIT = 32
 
@@ -93,7 +95,7 @@ def _form(values: dict[str, str], pump: str) -> str:
                         for model, p in cat.PUMPS.items()})
     pump_values = ["auto"] + sorted(cat.PUMPS)
     examples = "".join(
-        f'<a href="/?example={index}">{wk.esc(name)}</a>'
+        f'<a href="{PREFIX}/?example={index}">{wk.esc(name)}</a>'
         for index, name in enumerate(EXAMPLES)
     )
 
@@ -103,25 +105,25 @@ def _form(values: dict[str, str], pump: str) -> str:
                 f'value="{wk.esc(values[name])}"></div>')
 
     return f"""
-<form method="post" action="/">
+<form method="post" action="{PREFIX}/">
   <div class="grp"><label>Теплоноситель</label>
     <select name="fluid">{_options(sorted(fluid_labels), values['fluid'], fluid_labels)}</select></div>
   <div class="row2">
-    {field("temperature", "Температура, °C", "1", 'min="-20" max="150"')}
-    {field("flow", "Расход, м³/ч", "0.5", 'min="0.1"')}
+    {field("temperature", "Температура, °C", "any", 'min="-20" max="150"')}
+    {field("flow", "Расход, м³/ч", "any", 'min="0.1"')}
   </div>
   <div class="row2">
-    {field("static", "Подъём H_ст, м", "0.5", 'min="-50" max="100"')}
-    {field("back", "Давление, бар", "0.1", 'min="0" max="16"')}
+    {field("static", "Подъём H_ст, м", "any", 'min="-50" max="100"')}
+    {field("back", "Давление, бар", "any", 'min="0" max="16"')}
   </div>
   <div class="row2">
-    {field("lift", "Высота всасывания, м", "0.1", 'min="-10" max="8"')}
-    {field("motor_margin", "Запас двигателя", "0.05", 'min="1" max="2"')}
+    {field("lift", "Высота всасывания, м", "any", 'min="-10" max="8"')}
+    {field("motor_margin", "Запас двигателя", "any", 'min="1" max="2"')}
   </div>
   <div class="row2">
     <div class="grp"><label>Всасывание: DN</label>
       <select name="suction_dn">{_options(dn_values, values['suction_dn'], dn_labels)}</select></div>
-    {field("suction_len", "Длина всасывания, м", "0.5", 'min="0.5"')}
+    {field("suction_len", "Длина всасывания, м", "any", 'min="0.5"')}
   </div>
   <div class="row2">
     {field("suction_elbows", "Отводы 90° (всас.)", "1", 'min="0" max="20"')}
@@ -131,7 +133,7 @@ def _form(values: dict[str, str], pump: str) -> str:
   <div class="row2">
     <div class="grp"><label>Напорная линия: DN</label>
       <select name="dn">{_options(dn_values, values['dn'], dn_labels)}</select></div>
-    {field("length", "Длина линии, м", "1", 'min="0.5"')}
+    {field("length", "Длина линии, м", "any", 'min="0.5"')}
   </div>
   <div class="row2">
     {field("elbows", "Отводы 90°", "1", 'min="0" max="50"')}
@@ -145,7 +147,7 @@ def _form(values: dict[str, str], pump: str) -> str:
     {field("filters", "Фильтры", "1", 'min="0" max="10"')}
     {field("hours", "Часов/год", "50", 'min="0" max="8760"')}
   </div>
-  {field("price", "Цена эл., руб/(кВт·ч)", "0.1", 'min="0"')}
+  {field("price", "Цена эл., руб/(кВт·ч)", "any", 'min="0"')}
   <div class="grp"><label>Насос</label>
     <select name="pump">{_options(pump_values, pump, pump_labels)}</select></div>
   <button type="submit">Рассчитать</button>
@@ -250,8 +252,8 @@ def _kpi_card(res, token: str) -> str:
              f"{motor.power:.2f} кВт" if motor else ""),
         ]) + f"""
 <div class="btns">
-  <a href="/download/{token}/pdf">Скачать PDF-отчёт</a>
-  <a href="/download/{token}/docx">Скачать отчёт Word</a>
+  <a href="{PREFIX}/download/{token}/pdf">Скачать PDF-отчёт</a>
+  <a href="{PREFIX}/download/{token}/docx">Скачать отчёт Word</a>
 </div>""",
         hint=f"{res.network.fluid.name}, Q = {res.network.flow_m3h:.1f} м³/ч",
     )

@@ -3,6 +3,9 @@
 Запуск:  python -m screw_conveyor.web   →  http://127.0.0.1:5001
 Страница содержит форму исходных данных, результаты расчёта со схемой и
 графиками, а также выгрузку отчётов в PDF и Word.
+
+При монтировании под префиксом (например, /screw в общем приложении app.py)
+абсолютные ссылки страницы строятся от переменной окружения SCREW_PREFIX.
 """
 
 from __future__ import annotations
@@ -24,7 +27,9 @@ from screw_conveyor.core import (EXAMPLES, CalculationError, ScrewInput, calcula
                                  select)
 from screw_conveyor.report import PROGRAM, TITLE, build_docx, build_pdf
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "out")
+OUT_DIR = wk.report_dir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                     "out"))
+PREFIX = os.environ.get("SCREW_PREFIX", "").rstrip("/")
 CACHE: OrderedDict[str, tuple[ScrewInput, bool]] = OrderedDict()
 CACHE_LIMIT = 32
 
@@ -62,18 +67,18 @@ def _form(values: dict[str, str], select_mode: bool) -> str:
     diameter_labels = {d * 1000: f"Ø{d * 1000:.0f} мм" for d in cat.STANDARD_DIAMETERS}
     selected = " checked" if select_mode else ""
     examples = "".join(
-        f'<a href="/?example={index}">{wk.esc(name)}</a>'
+        f'<a href="{PREFIX}/?example={index}">{wk.esc(name)}</a>'
         for index, name in enumerate(EXAMPLES)
     )
     return f"""
-<form method="post" action="/">
+<form method="post" action="{PREFIX}/">
   <div class="grp"><label>Транспортируемый груз</label>
     <select name="material">{_options(sorted(cat.MATERIALS), values['material'], material_labels)}</select></div>
   <div class="grp"><label>Производительность, т/ч</label>
-    <input name="capacity" type="number" step="0.1" min="0.1" value="{wk.esc(values['capacity'])}"></div>
+    <input name="capacity" type="number" step="any" min="0.1" value="{wk.esc(values['capacity'])}"></div>
   <div class="row2">
     <div class="grp"><label>Длина L, м</label>
-      <input name="length" type="number" step="0.1" min="0.5" value="{wk.esc(values['length'])}"></div>
+      <input name="length" type="number" step="any" min="0.5" value="{wk.esc(values['length'])}"></div>
     <div class="grp"><label>Угол β, °</label>
       <input name="incline" type="number" step="1" min="0" max="45" value="{wk.esc(values['incline'])}"></div>
   </div>
@@ -85,9 +90,9 @@ def _form(values: dict[str, str], select_mode: bool) -> str:
   </div>
   <div class="row2">
     <div class="grp"><label>Заполнение ψ</label>
-      <input name="fill" type="number" step="0.05" min="0.05" max="0.6" value="{wk.esc(values['fill'])}"></div>
+      <input name="fill" type="number" step="any" min="0.05" max="0.6" value="{wk.esc(values['fill'])}"></div>
     <div class="grp"><label>Шаг S/D</label>
-      <input name="pitch" type="number" step="0.1" min="0.5" max="1.5" value="{wk.esc(values['pitch'])}"></div>
+      <input name="pitch" type="number" step="any" min="0.5" max="1.5" value="{wk.esc(values['pitch'])}"></div>
   </div>
   <div class="grp"><label>Марка стали</label>
     <select name="steel">{_options(sorted(cat.STEEL_GRADES), values['steel'])}</select></div>
@@ -115,8 +120,8 @@ def _result_html(res, selection, token: str) -> str:
             ("Масса", f"{res.total_mass:.0f}", "кг"),
         ]) + f"""
 <div class="btns">
-  <a href="/download/{token}/pdf">Скачать PDF-отчёт</a>
-  <a href="/download/{token}/docx">Скачать отчёт Word</a>
+  <a href="{PREFIX}/download/{token}/pdf">Скачать PDF-отчёт</a>
+  <a href="{PREFIX}/download/{token}/docx">Скачать отчёт Word</a>
 </div>""",
         hint=f"{res.material.name}, Ø{res.diameter * 1000:.0f} мм",
     )

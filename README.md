@@ -10,9 +10,18 @@
 
 Порты переопределяются переменными окружения `SCREW_PORT` и `HYDRO_PORT`.
 
+## Скриншоты
+
+<p align="center">
+  <img src="docs/screenshots/portfolio.png" width="46%" alt="Страница портфолио с двумя калькуляторами">
+  <img src="docs/screenshots/screw.png" width="26%" alt="Расчёт шнекового конвейера">
+  <img src="docs/screenshots/hydro.png" width="26%" alt="Расчёт гидравлической сети и подбор насоса">
+</p>
+
 ## Структура
 
 ```
+app.py             общая точка входа: / — портфолио, /screw/ и /hydro/ — калькуляторы
 common/            общие модули (не зависят от конкретной программы)
   fmt.py           форматирование чисел и процентов под русскую локаль
   hydraulics.py    свойства жидкостей, скорость, Re, λ (Колбрук–Уайт), потери напора
@@ -22,7 +31,11 @@ common/            общие модули (не зависят от конкр�
   web_kit.py       карточки, таблицы, KPI, значки, загрузка файлов для Flask
 screw_conveyor/    программа 1: core, catalog, charts, report, cli, web, tests
 hydro_net/         программа 2: core, catalog, charts, report, cli, web, tests
+docs/screenshots/  снимки интерфейсов для портфолио
 out/               готовые отчёты (PDF/DOCX), создаются при запуске
+Procfile           команда запуска для хостингов (Render, Railway и совместимые)
+render.yaml        blueprint бесплатного веб-сервиса Render
+Dockerfile         образ для хостингов с Docker (Render, Koyeb, HF Spaces)
 ```
 
 В каждой программе: `core.py` — расчётное ядро, `catalog.py` — справочники
@@ -64,7 +77,30 @@ python -m screw_conveyor.cli --capacity 33 --length 24 --diameter 320 --pdf out/
 # веб-интерфейс
 python -m hydro_net.web        # http://127.0.0.1:5002
 python -m screw_conveyor.web   # http://127.0.0.1:5001
+
+# оба калькулятора одним приложением (как на хостинге)
+python app.py                  # http://127.0.0.1:8000 → / , /screw/ , /hydro/
 ```
+
+`app.py` собирает оба Flask-приложения в один WSGI-сервис: `/` — страница-портфолио,
+`/screw/` и `/hydro/` — калькуляторы, `/healthz` — проверка живости.
+
+## Публикация на бесплатном хостинге
+
+Репозиторий готов к деплою одним веб-сервисом (Render, бесплатный план):
+
+1. Открыть <https://render.com/deploy?repo=https://github.com/viramax43-art/engine-portfolio>
+   и подтвердить создание сервиса из `render.yaml`.
+   Вручную: New → Web Service → подключить репозиторий, build `pip install -r requirements.txt`,
+   start `gunicorn app:app --bind 0.0.0.0:$PORT --timeout 180 --workers 1 --threads 4`.
+2. Через 2–3 минуты сайт доступен по адресу `https://<имя-сервиса>.onrender.com`:
+   `/` — портфолио, `/screw/` и `/hydro/` — калькуляторы. Бесплатный инстанс засыпает
+   без трафика и просыпается за ~30 с при первом запросе.
+
+Переменные окружения заданы в `render.yaml`: `PYTHON_VERSION=3.12.6`,
+`MPLCONFIGDIR=/tmp/mpl`, `OUT_DIR=/tmp/out`, `SCREW_PREFIX=/screw`, `HYDRO_PREFIX=/hydro`.
+Тот же репозиторий разворачивается через `Dockerfile` (порт из `PORT`, по умолчанию 7860)
+на Koyeb, Hugging Face Spaces и любом Docker-хостинге.
 
 ## Тесты
 

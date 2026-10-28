@@ -9,9 +9,30 @@
 from __future__ import annotations
 
 import html
+import os
+import tempfile
 
 PROGRAM_FOOTER = ("Расчёт выполнен по инженерной методике; результат носит оценочный "
                   "характер и уточняется по конструкторской документации.")
+
+
+def report_dir(default: str) -> str:
+    """Каталог для готовых отчётов (PDF/Word).
+
+    По умолчанию — подкаталог ``out`` проекта, переопределяется переменной
+    окружения ``OUT_DIR``. На хостинге файловая система может быть доступна
+    только для чтения, поэтому при невозможности записи берётся временный каталог.
+    """
+    path = os.environ.get("OUT_DIR") or default
+    try:
+        os.makedirs(path, exist_ok=True)
+        probe = os.path.join(path, ".write-check")
+        with open(probe, "w", encoding="utf-8") as handle:
+            handle.write("ok")
+        os.remove(probe)
+        return path
+    except OSError:
+        return tempfile.gettempdir()
 
 
 class Raw(str):
